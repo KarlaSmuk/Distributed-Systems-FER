@@ -1,15 +1,12 @@
 package hr.fer.tel.rassus.server.model.domain;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
+import java.util.List;
 
 @Entity
 @Getter
@@ -18,8 +15,8 @@ import java.util.UUID;
 public class Sensor {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private Double latitude;
 
@@ -28,6 +25,9 @@ public class Sensor {
     private String ip;
 
     private Integer port;
+
+    @OneToMany(mappedBy = "sensor")
+    private List<Reading> readings;
 
     public Sensor(Double latitude, Double longitude, String ip, Integer port) {
         this.latitude = latitude;

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.UUID;
 
 import static java.lang.Math.*;
 
@@ -34,12 +33,12 @@ public class SensorService {
         return sensors.stream().map(SensorDto::new).toList();
     }
 
-    public SensorDto getSensorById(UUID id) {
+    public SensorDto getSensorById(Long id) {
         Sensor sensor = sensorRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sensor not found"));
         return new SensorDto(sensor);
     }
 
-    public SensorDto findNearestNeighbour(UUID sensorId) {
+    public SensorDto findNearestNeighbour(Long sensorId) {
         Sensor sensor = sensorRepository.findById(sensorId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sensor not found"));
         List<Sensor> allSensors = sensorRepository.findAll();
 
@@ -62,6 +61,7 @@ public class SensorService {
         return new SensorDto(nearestSensor);
     }
 
+    // util function for Haversine
     private double haversine(double lat1, double lon1, double lat2, double lon2) {
         double R = 6371; // radius of Earth in km
         double dLat = toRadians(lat2 - lat1);

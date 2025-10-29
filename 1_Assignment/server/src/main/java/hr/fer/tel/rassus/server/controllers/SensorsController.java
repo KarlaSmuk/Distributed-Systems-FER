@@ -10,7 +10,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/sensors")
@@ -37,7 +36,7 @@ public class SensorsController {
 
     @GetMapping("/{id}")
     public ResponseEntity<SensorDto> getSensorById(@PathVariable String id) {
-        return ResponseEntity.ok(sensorService.getSensorById(UUID.fromString(id)));
+        return ResponseEntity.ok(sensorService.getSensorById(Long.parseLong(id)));
     }
 
     @GetMapping
@@ -47,7 +46,7 @@ public class SensorsController {
 
     @GetMapping("/{id}/nearest-neighbour")
     public ResponseEntity<SensorDto> getNearestNeighbour(@PathVariable String id) {
-        return ResponseEntity.ok(sensorService.findNearestNeighbour(UUID.fromString(id)));
+        return ResponseEntity.ok(sensorService.findNearestNeighbour(Long.parseLong(id)));
     }
 
 }

@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class SensorDto {
 
-    private String id;
+    private Long id;
 
     private Double latitude;
 
@@ -17,7 +17,7 @@ public class SensorDto {
     private Integer port;
 
     public SensorDto(Sensor sensor) {
-        this.id = String.valueOf(sensor.getId());
+        this.id = sensor.getId();
         this.latitude = sensor.getLatitude();
         this.longitude = sensor.getLongitude();
         this.ip = sensor.getIp();
