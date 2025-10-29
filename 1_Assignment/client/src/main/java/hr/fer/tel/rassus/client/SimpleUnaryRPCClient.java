@@ -1,8 +1,10 @@
-package hr.fer.tel.rassus.examples;
+package hr.fer.tel.rassus.client;
 
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import hr.fer.tel.rassus.client.Message;
+import hr.fer.tel.rassus.client.UppercaseGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;

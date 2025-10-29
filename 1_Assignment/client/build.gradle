@@ -5,8 +5,8 @@ plugins {
     id 'eclipse'
 }
 
-group 'hr.fer.rassus'
-version '1'
+group = 'hr.fer.tel.rassus'
+version '1.0-SNAPSHOT'
 
 
 repositories {
@@ -26,6 +26,12 @@ dependencies {
 	  implementation 'io.grpc:grpc-stub:1.68.0'
 	  compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
     //################ GRPC ################
+
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
+
+    testCompileOnly("org.projectlombok:lombok:1.18.42")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
 }
 
 // Inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code.
@@ -68,7 +74,7 @@ task runExampleClient(type: JavaExec) {
     group = "exec"
     description = "Run client with JavaExecTask"
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = "hr.fer.tel.rassus.examples.SimpleUnaryRPCClient"
+    mainClass = "hr.fer.tel.rassus.client.SimpleUnaryRPCClient"
     standardInput = System.in
 
 }
@@ -77,5 +83,5 @@ task runExampleServer(type: JavaExec) {
     group = "exec"
     description = "Run client with JavaExecTask"
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = "hr.fer.tel.rassus.examples.SimpleUnaryRPCServer"
+    mainClass = "hr.fer.tel.rassus.client.SimpleUnaryRPCServer"
 }

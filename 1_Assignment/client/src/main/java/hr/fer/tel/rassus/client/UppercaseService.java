@@ -1,5 +1,7 @@
-package hr.fer.tel.rassus.examples;
+package hr.fer.tel.rassus.client;
 
+import hr.fer.tel.rassus.client.Message;
+import hr.fer.tel.rassus.client.UppercaseGrpc;
 import io.grpc.stub.StreamObserver;
 import java.util.logging.Logger;
 
@@ -12,7 +14,7 @@ public class UppercaseService extends UppercaseGrpc.UppercaseImplBase {
 
   @Override
   public void requestUppercase(
-      Message request, StreamObserver<Message> responseObserver
+          Message request, StreamObserver<Message> responseObserver
   ) {
     logger.info("Got a new message: " + request.getPayload());
 

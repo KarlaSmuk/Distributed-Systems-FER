@@ -1,4 +1,4 @@
-package hr.fer.tel.rassus.examples;
+package hr.fer.tel.rassus.client;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
