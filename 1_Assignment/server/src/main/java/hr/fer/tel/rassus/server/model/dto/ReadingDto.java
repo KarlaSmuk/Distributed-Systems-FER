@@ -18,7 +18,7 @@ public class ReadingDto {
 
     private Double co;
 
-    private Double so2;
+    private Double no2;
 
     private SensorDto sensor;
 
@@ -28,7 +28,7 @@ public class ReadingDto {
         this.pressure = reading.getPressure();
         this.humidity = reading.getHumidity();
         this.co = reading.getCo();
-        this.so2 = reading.getSo2();
+        this.no2 = reading.getNo2();
         this.sensor = new SensorDto(reading.getSensor());
     }
 }
