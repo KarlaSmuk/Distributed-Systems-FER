@@ -3,22 +3,21 @@ package hr.fer.tel.rassus.client;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import hr.fer.tel.rassus.client.Message;
-import hr.fer.tel.rassus.client.UppercaseGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import io.grpc.binarylog.v1.Message;
 
 /**
  * The type Simple unary rpc client.
  */
-public class SimpleUnaryRPCClient {
+public class SensorRPCClient {
 
-  private static final Logger logger = Logger.getLogger(SimpleUnaryRPCClient.class.getName());
+  private static final Logger logger = Logger.getLogger(SensorRPCClient.class.getName());
 
 
   private final ManagedChannel channel;
-  private final UppercaseGrpc.UppercaseBlockingStub uppercaseBlockingStub;
+  private final SensorGrpc.SensorBlockingStub neighborSensorStub;
 
   /**
    * Instantiates a new Simple unary rpc client.
@@ -26,11 +25,9 @@ public class SimpleUnaryRPCClient {
    * @param host the host
    * @param port the port
    */
-  public SimpleUnaryRPCClient(String host, int port) {
+  public SensorRPCClient(String host, int port) {
     this.channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
-
-    uppercaseBlockingStub = UppercaseGrpc.newBlockingStub(channel);
-
+      neighborSensorStub = SensorGrpc.newBlockingStub(channel);
   }
 
   /**
@@ -52,17 +49,17 @@ public class SimpleUnaryRPCClient {
 
     final String payload = "message";
 
-    Message request = Message.newBuilder()
-        .setPayload(payload)
-        .build();
-
-    logger.info("Sending: " + request.getPayload());
-    try {
-      Message response = uppercaseBlockingStub.requestUppercase(request);
-      logger.info("Received: " + response.getPayload());
-    } catch (StatusRuntimeException e) {
-      logger.info("RPC failed: " + e.getMessage());
-    }
+//      SensorDataRequest request = Message.newBuilder()
+//        .setPayload(payload)
+//        .build();
+//
+//    logger.info("Sending: " + request.getPayload());
+//    try {
+//      Message response = neighborSensorStub.getSensorData(request);
+//      logger.info("Received: " + response.getPayload());
+//    } catch (StatusRuntimeException e) {
+//      logger.info("RPC failed: " + e.getMessage());
+//    }
   }
 
 
@@ -73,7 +70,7 @@ public class SimpleUnaryRPCClient {
    * @throws InterruptedException the interrupted exception
    */
   public static void main(String[] args) throws InterruptedException {
-    SimpleUnaryRPCClient client = new SimpleUnaryRPCClient("127.0.0.1", 3000);
+    SensorRPCClient client = new SensorRPCClient("127.0.0.1", 3000);
 
     client.requestUppercase();
 

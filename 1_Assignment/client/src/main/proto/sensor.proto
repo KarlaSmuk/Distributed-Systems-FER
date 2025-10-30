@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "hr.fer.tel.rassus.client";
+
+package hr.fer.tel.rassus.client;
+
+// gRPC service that enables communication between sensors
+service Sensor {
+  // When sensor requests a reading from its nearest neighbour sensor
+  rpc RequestSensor (SensorDataRequest) returns (SensorDataResponse) {}
+}
+
+// Message sent by a sensor to its nearest neighbour sensor
+message SensorDataRequest {
+  int32 requester_id = 1;
+}
+
+// Message returned by the nearest neighbor with its current readings
+message SensorDataResponse {
+  float temperature = 1;
+  float pressure = 2;
+  float humidity = 3;
+  float CO = 4;
+  float NO2 = 5;
+}
