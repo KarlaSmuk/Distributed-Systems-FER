@@ -18,9 +18,9 @@ message SensorDataRequest {
 
 // Message returned by the nearest neighbor with its current readings
 message SensorDataResponse {
-  float temperature = 1;
-  float pressure = 2;
-  float humidity = 3;
-  float CO = 4;
-  float NO2 = 5;
+  double temperature = 1;
+  double pressure = 2;
+  double humidity = 3;
+  double CO = 4;
+  double NO2 = 5;
 }
