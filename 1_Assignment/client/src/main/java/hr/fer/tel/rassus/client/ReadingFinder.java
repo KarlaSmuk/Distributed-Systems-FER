@@ -33,7 +33,8 @@ public class ReadingFinder {
                             Double.parseDouble(values[1]),
                             Double.parseDouble(values[2]),
                             Double.parseDouble(values[3]),
-                            Objects.equals(values[4], "") ? Double.parseDouble(values[5]) : Double.parseDouble(values[4])
+                            values[4].isEmpty() ? 0.0 : Double.parseDouble(values[4]),
+                            values.length > 5 ? Double.parseDouble(values[5]) : 0.0
                     );
                 }
             }

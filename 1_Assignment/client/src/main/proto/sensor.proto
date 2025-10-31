@@ -21,6 +21,7 @@ message SensorDataResponse {
   double temperature = 1;
   double pressure = 2;
   double humidity = 3;
-  double CO = 4;
-  double NO2 = 5;
+  double co = 4;
+  double no2 = 5;
+  double so2 = 6;
 }

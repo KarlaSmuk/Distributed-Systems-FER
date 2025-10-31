@@ -47,6 +47,9 @@ public class SensorRPCClient {
     private SensorRPCServer sensorServer;
     private RetrofitService retrofitService = new RetrofitService();
 
+    private static volatile boolean running = true;
+
+
     public SensorRPCClient(String ip) {
         this.ip = ip;
         this.startTime = System.currentTimeMillis();
@@ -64,7 +67,7 @@ public class SensorRPCClient {
         Reading reading = ReadingFinder.findReading(activeSeconds);
 
         if (reading != null) {
-            this.currentReading = new Reading(reading.getTemperature(), reading.getPressure(), reading.getHumidity(), reading.getCo(), reading.getNo2());
+            this.currentReading = new Reading(reading.getTemperature(), reading.getPressure(), reading.getHumidity(), reading.getCo(), reading.getNo2(), reading.getSo2());
             logger.info("SENSOR " + getId() + ": Current reading: " + currentReading);
         }
     }
@@ -101,7 +104,7 @@ public class SensorRPCClient {
     }
 
     private void createReading(Reading reading) {
-        CreateReadingRequest request = new CreateReadingRequest(reading.getTemperature(), reading.getPressure(), reading.getHumidity(), reading.getCo(), reading.getNo2());
+        CreateReadingRequest request = new CreateReadingRequest(reading.getTemperature(), reading.getPressure(), reading.getHumidity(), reading.getCo(), reading.getNo2(), reading.getSo2());
 
         this.retrofitService.getReadingApi().createReading(String.valueOf(this.id), request).enqueue(new Callback<>() {
             @Override
@@ -126,7 +129,7 @@ public class SensorRPCClient {
     }
 
     private void findNearestNeighbor() {
-        this.retrofitService.getSensorApi().getNearestNeighbour(String.valueOf(this.id)).enqueue(new Callback<SensorResponse>() {
+        this.retrofitService.getSensorApi().getNearestNeighbour(String.valueOf(this.id)).enqueue(new Callback<>() {
             @Override
             public void onResponse(Call<SensorResponse> call, Response<SensorResponse> response) {
                 if (response.isSuccessful()) {
@@ -154,7 +157,7 @@ public class SensorRPCClient {
 
         try {
             SensorDataResponse response = neighborSensorStub.requestNeighbourReading(request);
-            this.setNearestNeighbourReading(new Reading(response.getTemperature(), response.getPressure(), response.getHumidity(), response.getCO(), response.getNO2()));
+            this.setNearestNeighbourReading(new Reading(response.getTemperature(), response.getPressure(), response.getHumidity(), response.getCo(), response.getNo2(), response.getSo2()));
 
             logger.info("SENSOR " + getId() + ": Fetched nearest neighbour sensor reading: " + response);
         } catch (Exception e) {
@@ -168,10 +171,11 @@ public class SensorRPCClient {
         double temperature = averageValue(myReading.getTemperature(), neighborReading.getTemperature());
         double pressure = averageValue(myReading.getPressure(), neighborReading.getPressure());
         double humidity = averageValue(myReading.getHumidity(), neighborReading.getHumidity());
-        double CO = averageValue(myReading.getCo(), neighborReading.getCo());
-        double NO2 = averageValue(myReading.getNo2(), neighborReading.getNo2());
+        double co = averageValue(myReading.getCo(), neighborReading.getCo());
+        double no2 = averageValue(myReading.getNo2(), neighborReading.getNo2());
+        double so2 = averageValue(myReading.getSo2(), neighborReading.getSo2());
 
-        return new Reading(temperature, pressure, humidity, CO, NO2);
+        return new Reading(temperature, pressure, humidity, co, no2, so2);
     }
 
     private double averageValue(double v1, double v2) {
@@ -192,8 +196,6 @@ public class SensorRPCClient {
     }
 
     public void start() throws IOException, InterruptedException {
-
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         // start the gRPC server to receive requests from other sensors
         this.sensorServer = new SensorRPCServer(this);
@@ -224,7 +226,12 @@ public class SensorRPCClient {
             initializeNeighborSensorConnection(nearestNeighbour.getIp(), nearestNeighbour.getPort());
         }
 
-        scheduler.scheduleAtFixedRate(() -> {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.warning("Stopping sensor...");
+            running = false;
+        }));
+
+        while (running) {
             try {
                 // find reading
                 this.findReadingFromCSV();
@@ -246,16 +253,13 @@ public class SensorRPCClient {
 
 
                 sleep(5000);
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                this.stop();
+                this.sensorServer.stop();
                 logger.warning("SENSOR " + getId() + ": stopped: ");
             }
-        }, 0, 2, TimeUnit.SECONDS); // every 2 seconds
-
-        sleep(5000);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(scheduler::shutdown));
-        this.stop();
-        this.sensorServer.stop();
+        }
     }
 
     public void stop() throws InterruptedException {

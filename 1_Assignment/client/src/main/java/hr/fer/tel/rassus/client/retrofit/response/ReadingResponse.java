@@ -17,5 +17,5 @@ public class ReadingResponse {
 
     private Double no2;
 
-    private SensorResponse sensor;
+    private Double so2;
 }

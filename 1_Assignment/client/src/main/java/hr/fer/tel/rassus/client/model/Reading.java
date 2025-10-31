@@ -1,8 +1,10 @@
 package hr.fer.tel.rassus.client.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class Reading {
 
     private Double temperature;
@@ -15,11 +17,5 @@ public class Reading {
 
     private Double no2;
 
-    public Reading(double temperature, double pressure, double humidity, double co, Double no2_so2) {
-        this.temperature = temperature;
-        this.pressure = pressure;
-        this.humidity = humidity;
-        this.co = co;
-        this.no2 = no2_so2;
-    }
+    private Double so2;
 }
