@@ -14,4 +14,6 @@ public class CreateReadingRequest {
     private Double co;
 
     private Double no2;
+
+    private Double so2;
 }

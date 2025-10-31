@@ -27,6 +27,8 @@ public class Reading {
 
     private Double no2;
 
+    private Double so2;
+
     @ManyToOne
     @JoinColumn(name = "sensor_id", nullable = false)
     private Sensor sensor;
@@ -37,6 +39,7 @@ public class Reading {
         this.humidity = request.getHumidity();
         this.co = request.getCo();
         this.no2 = request.getNo2();
+        this.no2 = request.getSo2();
         this.sensor = sensor;
     }
 }

@@ -20,6 +20,8 @@ public class ReadingDto {
 
     private Double no2;
 
+    private Double so2;
+
     private SensorDto sensor;
 
     public ReadingDto(Reading reading) {
