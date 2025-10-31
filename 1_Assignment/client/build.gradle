@@ -34,6 +34,8 @@ dependencies {
     testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
 
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0' // Gson converter for Retrofit
+    implementation 'com.google.code.gson:gson:2.13.2'
 }
 
 // Inform IDEs like IntelliJ IDEA, Eclipse or NetBeans about the generated code.
@@ -72,18 +74,11 @@ protobuf {
   }
 }
 //################ GRPC ################
-task runExampleClient(type: JavaExec) {
+task client(type: JavaExec) {
     group = "exec"
     description = "Run client with JavaExecTask"
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = "hr.fer.tel.rassus.client.SimpleUnaryRPCClient"
+    mainClass = "hr.fer.tel.rassus.client.SensorRPCClient"
     standardInput = System.in
 
-}
-
-task runExampleServer(type: JavaExec) {
-    group = "exec"
-    description = "Run client with JavaExecTask"
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = "hr.fer.tel.rassus.client.SimpleUnaryRPCServer"
 }

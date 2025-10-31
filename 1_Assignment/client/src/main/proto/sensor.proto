@@ -8,7 +8,7 @@ package hr.fer.tel.rassus.client;
 // gRPC service that enables communication between sensors
 service Sensor {
   // When sensor requests a reading from its nearest neighbour sensor
-  rpc RequestSensor (SensorDataRequest) returns (SensorDataResponse) {}
+  rpc requestNeighbourReading (SensorDataRequest) returns (SensorDataResponse) {}
 }
 
 // Message sent by a sensor to its nearest neighbour sensor

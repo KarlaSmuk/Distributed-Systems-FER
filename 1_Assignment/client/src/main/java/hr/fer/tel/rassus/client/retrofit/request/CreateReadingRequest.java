@@ -1,8 +1,10 @@
 package hr.fer.tel.rassus.client.retrofit.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class CreateReadingRequest {
 
     private Double temperature;

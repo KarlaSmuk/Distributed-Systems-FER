@@ -3,14 +3,20 @@ package hr.fer.tel.rassus.client;
 import hr.fer.tel.rassus.client.model.Reading;
 
 import java.io.*;
+import java.util.Objects;
 
 public class ReadingFinder {
 
-    public Reading findReading(int activeSeconds) {
+    public static Reading findReading(long activeSeconds) throws FileNotFoundException {
 
-        int row = (activeSeconds % 100) + 1;
+        int row = Math.toIntExact((activeSeconds % 100) + 1);
 
-        try (BufferedReader br = new BufferedReader(new FileReader("readings.csv"))) {
+        InputStream readings = ReadingFinder.class.getClassLoader().getResourceAsStream("readings.csv");
+        if (readings == null) {
+            throw new FileNotFoundException("File readings.csv not found");
+        }
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(readings))) {
             String line;
             int currentRow = 0;
 
@@ -27,11 +33,10 @@ public class ReadingFinder {
                             Double.parseDouble(values[1]),
                             Double.parseDouble(values[2]),
                             Double.parseDouble(values[3]),
-                            values[4] == null ? Double.parseDouble(values[5]) : Double.parseDouble(values[4])
+                            Objects.equals(values[4], "") ? Double.parseDouble(values[5]) : Double.parseDouble(values[4])
                     );
                 }
             }
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

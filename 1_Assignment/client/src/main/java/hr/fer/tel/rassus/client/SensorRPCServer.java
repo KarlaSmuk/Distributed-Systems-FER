@@ -11,24 +11,22 @@ public class SensorRPCServer {
     private static final Logger logger = Logger.getLogger(SensorRPCServer.class.getName());
 
     private Server server;
-    private final int port;
+    private final SensorRPCClient sensorRPCClient;
 
-    public SensorRPCServer(int port) {
-        this.port = port;
+    public SensorRPCServer(SensorRPCClient sensorRPCClient) {
+        this.sensorRPCClient = sensorRPCClient;
     }
 
-    /**
-     * Start the server.
-     *
-     * @throws IOException the io exception
-     */
+    public int getPort() {
+        return server.getPort();
+    }
+
     public void start() throws IOException {
         // Register the service
-        server = ServerBuilder.forPort(port)
-                .addService(new SensorService())
+        this.server = ServerBuilder.forPort(0) // 0 to find free port
+                .addService(new SensorService(this.sensorRPCClient))
                 .build()
                 .start();
-        logger.info("Server started on " + port);
 
         //  Clean shutdown of server in case of JVM shutdown
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -42,38 +40,9 @@ public class SensorRPCServer {
         }));
     }
 
-    /**
-     * Stops the server.
-     *
-     * @throws InterruptedException the interrupted exception
-     */
     public void stop() throws InterruptedException {
         if (server != null) {
             server.shutdown().awaitTermination(30, TimeUnit.SECONDS);
         }
-    }
-
-    /**
-     * Await termination on the main thread
-     *
-     * @throws InterruptedException the interrupted exception
-     */
-    public void blockUntilShutdown() throws InterruptedException {
-        if (server != null) {
-            server.awaitTermination();
-        }
-    }
-
-    /**
-     * The entry point of application.
-     *
-     * @param args the input arguments
-     * @throws IOException          the io exception
-     * @throws InterruptedException the interrupted exception
-     */
-    public static void main(String[] args) throws IOException, InterruptedException {
-        final SensorRPCServer server = new SensorRPCServer(3000);
-        server.start();
-        server.blockUntilShutdown();
     }
 }

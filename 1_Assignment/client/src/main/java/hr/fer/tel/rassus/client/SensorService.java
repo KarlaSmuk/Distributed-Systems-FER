@@ -5,8 +5,15 @@ import io.grpc.stub.StreamObserver;
 
 public class SensorService extends SensorGrpc.SensorImplBase {
 
+    private final SensorRPCClient sensorRPCClient;
+
+    public SensorService(SensorRPCClient sensorRPCClient) {
+        this.sensorRPCClient = sensorRPCClient;
+    }
+
     @Override
-    public void requestSensor(SensorDataRequest request, StreamObserver<SensorDataResponse> responseObserver) {
+    public void requestNeighbourReading(SensorDataRequest request, StreamObserver<SensorDataResponse> responseObserver) {
+        Reading reading = sensorRPCClient.getCurrentReading();
 
         SensorDataResponse response = SensorDataResponse.newBuilder()
                 .setTemperature(reading.getTemperature())
