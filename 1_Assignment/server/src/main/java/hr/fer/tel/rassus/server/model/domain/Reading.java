@@ -2,6 +2,7 @@ package hr.fer.tel.rassus.server.model.domain;
 
 import hr.fer.tel.rassus.server.model.request.CreateReadingRequest;
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@Data
 public class Reading {
 
     @Id
@@ -39,7 +41,7 @@ public class Reading {
         this.humidity = request.getHumidity();
         this.co = request.getCo();
         this.no2 = request.getNo2();
-        this.no2 = request.getSo2();
+        this.so2 = request.getSo2();
         this.sensor = sensor;
     }
 }

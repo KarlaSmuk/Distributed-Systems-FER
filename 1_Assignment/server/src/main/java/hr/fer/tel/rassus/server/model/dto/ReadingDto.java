@@ -31,6 +31,7 @@ public class ReadingDto {
         this.humidity = reading.getHumidity();
         this.co = reading.getCo();
         this.no2 = reading.getNo2();
+        this.so2 = reading.getSo2();
         this.sensor = new SensorDto(reading.getSensor());
     }
 }
