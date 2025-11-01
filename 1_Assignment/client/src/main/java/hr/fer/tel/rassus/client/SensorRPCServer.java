@@ -5,10 +5,8 @@ import io.grpc.ServerBuilder;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 public class SensorRPCServer {
-    private static final Logger logger = Logger.getLogger(SensorRPCServer.class.getName());
 
     private Server server;
     private final SensorRPCClient sensorRPCClient;
