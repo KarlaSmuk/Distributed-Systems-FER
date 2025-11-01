@@ -27,8 +27,6 @@ public class ReadingService {
 
         Reading reading = new Reading(request, sensor);
 
-        System.out.println("Reading: no2 = " + reading.getNo2() + ", so2 = " + reading.getSo2());
-
         readingRepository.save(reading);
 
         return new ReadingDto(reading);
