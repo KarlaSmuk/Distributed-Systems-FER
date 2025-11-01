@@ -3,11 +3,10 @@ package hr.fer.tel.rassus.client;
 import hr.fer.tel.rassus.client.model.Reading;
 
 import java.io.*;
-import java.util.Objects;
 
 public class ReadingFinder {
 
-    public static Reading findReading(long activeSeconds) throws FileNotFoundException {
+    public static Reading findReading(Long activeSeconds) throws FileNotFoundException {
 
         int row = Math.toIntExact((activeSeconds % 100) + 1);
 

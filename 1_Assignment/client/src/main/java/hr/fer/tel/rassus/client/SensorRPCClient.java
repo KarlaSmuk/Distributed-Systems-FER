@@ -16,8 +16,6 @@ import retrofit2.Response;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -32,13 +30,13 @@ public class SensorRPCClient {
     private ManagedChannel channel;
     private SensorGrpc.SensorBlockingStub neighborSensorStub;
 
-    private long startTime;
+    private Long startTime;
 
-    private long id;
-    private double latitude;
-    private double longitude;
+    private Long id;
+    private Double latitude;
+    private Double longitude;
     private String ip;
-    private int port;
+    private Integer port;
 
     private Reading currentReading;
     private Reading nearestNeighbourReading;
@@ -168,25 +166,25 @@ public class SensorRPCClient {
     }
 
     private Reading calibrateReading(Reading myReading, Reading neighborReading) {
-        double temperature = averageValue(myReading.getTemperature(), neighborReading.getTemperature());
-        double pressure = averageValue(myReading.getPressure(), neighborReading.getPressure());
-        double humidity = averageValue(myReading.getHumidity(), neighborReading.getHumidity());
-        double co = averageValue(myReading.getCo(), neighborReading.getCo());
-        double no2 = averageValue(myReading.getNo2(), neighborReading.getNo2());
-        double so2 = averageValue(myReading.getSo2(), neighborReading.getSo2());
+        Double temperature = averageValue(myReading.getTemperature(), neighborReading.getTemperature());
+        Double pressure = averageValue(myReading.getPressure(), neighborReading.getPressure());
+        Double humidity = averageValue(myReading.getHumidity(), neighborReading.getHumidity());
+        Double co = averageValue(myReading.getCo(), neighborReading.getCo());
+        Double no2 = averageValue(myReading.getNo2(), neighborReading.getNo2());
+        Double so2 = averageValue(myReading.getSo2(), neighborReading.getSo2());
 
         return new Reading(temperature, pressure, humidity, co, no2, so2);
     }
 
-    private double averageValue(double v1, double v2) {
-        if (v1 > 0 && v2 > 0) {
-            return (v1 + v2) / 2;
+    private Double averageValue(Double v1, Double v2) {
+        if (v1 == 0.0 && v2 == 0.0) {
+            return 0.0;
         } else if (v1 > 0) {
             return v1;
         } else if (v2 > 0) {
             return v2;
         } else {
-            return 0;
+            return (v1 + v2) / 2;
         }
     }
 
@@ -195,21 +193,18 @@ public class SensorRPCClient {
         this.neighborSensorStub = SensorGrpc.newBlockingStub(channel);
     }
 
+    public void startSensorServer() throws IOException {
+        this.sensorServer = new SensorRPCServer(this);
+        this.sensorServer.start();
+        this.port = this.sensorServer.getPort();
+
+        logger.info("SENSOR " + getId() + ": Started sensor server on port " + this.port);
+    }
+
     public void start() throws IOException, InterruptedException {
 
         // start the gRPC server to receive requests from other sensors
-        this.sensorServer = new SensorRPCServer(this);
-        Thread serverThread = new Thread(() -> {
-            try {
-                this.sensorServer.start();
-                this.port = this.sensorServer.getPort();
-                logger.info("SENSOR " + getId() + ": gRPC server started on port " + this.port);
-            } catch (IOException e) {
-                logger.warning("Failed to start SensorServer: " + e.getMessage());
-            }
-        });
-        serverThread.start();
-        serverThread.join(); // wait until the server has started
+        this.startSensorServer();
 
         // register the sensor (REST server)
         this.registerSensor();
@@ -245,7 +240,8 @@ public class SensorRPCClient {
                     sleep(1000);
 
                     // calibrate own readings using neighbors reading
-                    this.currentReading = calibrateReading(this.currentReading, this.nearestNeighbourReading);
+                    if (this.nearestNeighbour != null)
+                        this.currentReading = calibrateReading(this.currentReading, this.nearestNeighbourReading);
                 }
 
                 // send reading to the REST server
