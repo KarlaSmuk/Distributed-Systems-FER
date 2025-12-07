@@ -23,7 +23,7 @@ public class StupidUDPServer {
     public static void main(String args[]) throws IOException {
 
         byte[] rcvBuf = new byte[256]; // received bytes
-        byte[] sendBuf = new byte[256];// sent bytes
+        byte[] sendBuf;// sent bytes
         String rcvStr;
 
         // create a UDP socket and bind it to the specified port on the local

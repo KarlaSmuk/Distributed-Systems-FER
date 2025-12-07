@@ -4,12 +4,21 @@
  */
 package hr.fer.tel.rassus.stupidudp.client;
 
+import hr.fer.tel.rassus.stupidudp.kafka.KafkaSensor;
+import hr.fer.tel.rassus.stupidudp.model.Reading;
+import hr.fer.tel.rassus.stupidudp.model.Sensor;
 import hr.fer.tel.rassus.stupidudp.network.*;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+
 import java.io.IOException;
+import java.io.Reader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,61 +30,95 @@ public class StupidUDPClient {
 
     static final int PORT = 10001; // server port
 
+
+    public static Reading readCsvRow(int row) throws IOException {
+
+        try (Reader reader = Files.newBufferedReader(Paths.get("readings.csv"))) {
+
+            CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                    .setHeader()
+                    .setSkipHeaderRecord(true)
+                    .setTrim(true)
+                    .build();
+
+            Iterable<CSVRecord> records = csvFormat.parse(reader);
+
+            int index = 0;
+            for (CSVRecord record : records) {
+                if (index == row) {
+                    Reading r = new Reading();
+
+                    r.setNo2(Double.valueOf(record.get("no2")));
+
+                    return r;
+                }
+                index++;
+            }
+        }
+
+        return null; // row does not exist
+    }
+
+
     public static void main(String args[]) throws IOException {
-
-        String sendString = "Any string...";
-
-        byte[] rcvBuf = new byte[256]; // received bytes
 
         // encode this String into a sequence of bytes using the platform's
         // default charset and store it into a new byte array
 
-        // determine the IP address of a host, given the host's name
-        InetAddress address = InetAddress.getByName("localhost");
+        // simulate package loss
+        // 0.3 -> 30% lost packages
+        // 1000ms delay of lost package
+        DatagramSocket socket = new SimpleSimulatedDatagramSocket(0.3, 1000); //SOCKET
 
-        // create a datagram socket and bind it to any available
-        // port on the local host
-        //DatagramSocket socket = new SimulatedDatagramSocket(0.2, 1, 200, 50); //SOCKET
-        DatagramSocket socket = new SimpleSimulatedDatagramSocket(0.2, 200); //SOCKET
+        while (KafkaSensor.stop == false) {
 
-        System.out.print("Client sends: ");
-        // send each character as a separate datagram packet
-        for (int i = 0; i < sendString.length(); i++) {
-            byte[] sendBuf = new byte[1];// sent bytes
-            sendBuf[0] = (byte) sendString.charAt(i);
+            Long currentTime = KafkaSensor.emulatedSystemClock.currentTimeMillis();
+            int row = Math.toIntExact(((currentTime - KafkaSensor.sensorStartTime) % 100) + 1);
+            Reading reading = readCsvRow(row);
 
-            // create a datagram packet for sending data
-            DatagramPacket packet = new DatagramPacket(sendBuf, sendBuf.length,
-                    address, PORT);
+            KafkaSensor.sensor.setVector(KafkaSensor.sensor.getVector() + 1);
 
-            // send a datagram packet from this socket
-            socket.send(packet); //SENDTO
-            System.out.print(new String(sendBuf));
-        }
-        System.out.println("");
+            reading.setSensorId(KafkaSensor.sensor.getId());
+            reading.setScalarTime(currentTime);
+            reading.setVectorTime(KafkaSensor.sensor.getVector());
 
-        StringBuffer receiveString = new StringBuffer();
+            KafkaSensor.readings.add(reading);
 
-        while (true) {
+            // determine the IP address of a host, given the host's name
+            InetAddress address = InetAddress.getByName("localhost");
+
+            System.out.println("Client sends: " + reading);
+
+            byte[] sendBuf = reading.toBytes();
+            byte[] rcvBuf = new byte[256];
+
             // create a datagram packet for receiving data
             DatagramPacket rcvPacket = new DatagramPacket(rcvBuf, rcvBuf.length);
 
-            try {
-                // receive a datagram packet from this socket
-                socket.receive(rcvPacket); //RECVFROM
-            } catch (SocketTimeoutException e) {
-                break;
-            } catch (IOException ex) {
-                Logger.getLogger(StupidUDPClient.class.getName()).log(Level.SEVERE, null, ex);
+            for(Sensor neighbor : KafkaSensor.sensor.getNeighbors()) {
+
+                // create a datagram packet for sending data
+                DatagramPacket packet = new DatagramPacket(sendBuf, sendBuf.length, address, neighbor.getPort());
+
+                while(true) { // loop for sending again if packet is lost
+
+                    // send a datagram packet from this socket
+                    socket.send(packet);
+
+                    try {
+                        // receive a datagram packet from this socket
+                        socket.receive(rcvPacket); //RECVFROM
+                        String receiveString = new String(rcvPacket.getData(), rcvPacket.getOffset(), rcvPacket.getLength());
+                        System.out.println("Received: " + receiveString);
+                        break; // if packet is received exit loop
+                    } catch (SocketTimeoutException e) {
+                       System.out.println("Lost packet, sending again");
+                    } catch (IOException ex) {
+                        Logger.getLogger(StupidUDPClient.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
             }
-
-            // construct a new String by decoding the specified subarray of bytes
-            // using the platform's default charset
-            receiveString.append(new String(rcvPacket.getData(), rcvPacket.getOffset(), rcvPacket.getLength()));
-
         }
-        System.out.println("Client received: " + receiveString);
-
         // close the datagram socket
         socket.close(); //CLOSE
     }
