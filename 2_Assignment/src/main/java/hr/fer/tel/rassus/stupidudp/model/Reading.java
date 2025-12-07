@@ -24,8 +24,8 @@ public class Reading {
         return mapper.writeValueAsBytes(this);
     }
 
-    public Reading fromBytes(byte[] bytes) {
+    public static Reading fromBytes(byte[] bytes) {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(bytes, this.getClass());
+        return mapper.readValue(bytes, Reading.class);
     }
 }

@@ -28,39 +28,7 @@ import java.util.logging.Logger;
  */
 public class StupidUDPClient {
 
-    static final int PORT = 10001; // server port
-
-
-    public static Reading readCsvRow(int row) throws IOException {
-
-        try (Reader reader = Files.newBufferedReader(Paths.get("readings.csv"))) {
-
-            CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
-                    .setHeader()
-                    .setSkipHeaderRecord(true)
-                    .setTrim(true)
-                    .build();
-
-            Iterable<CSVRecord> records = csvFormat.parse(reader);
-
-            int index = 0;
-            for (CSVRecord record : records) {
-                if (index == row) {
-                    Reading r = new Reading();
-
-                    r.setNo2(Double.valueOf(record.get("no2")));
-
-                    return r;
-                }
-                index++;
-            }
-        }
-
-        return null; // row does not exist
-    }
-
-
-    public static void main(String args[]) throws IOException {
+    public static void main(String[] args) throws IOException {
 
         // encode this String into a sequence of bytes using the platform's
         // default charset and store it into a new byte array
@@ -76,13 +44,13 @@ public class StupidUDPClient {
             int row = Math.toIntExact(((currentTime - KafkaSensor.sensorStartTime) % 100) + 1);
             Reading reading = readCsvRow(row);
 
-            KafkaSensor.sensor.setVector(KafkaSensor.sensor.getVector() + 1);
+            KafkaSensor.sensor.increaseVector();
 
             reading.setSensorId(KafkaSensor.sensor.getId());
             reading.setScalarTime(currentTime);
             reading.setVectorTime(KafkaSensor.sensor.getVector());
 
-            KafkaSensor.readings.add(reading);
+            KafkaSensor.myReadings.add(reading);
 
             // determine the IP address of a host, given the host's name
             InetAddress address = InetAddress.getByName("localhost");
@@ -121,5 +89,33 @@ public class StupidUDPClient {
         }
         // close the datagram socket
         socket.close(); //CLOSE
+    }
+
+    public static Reading readCsvRow(int row) throws IOException {
+
+        try (Reader reader = Files.newBufferedReader(Paths.get("readings.csv"))) {
+
+            CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                    .setHeader()
+                    .setSkipHeaderRecord(true)
+                    .setTrim(true)
+                    .build();
+
+            Iterable<CSVRecord> records = csvFormat.parse(reader);
+
+            int index = 0;
+            for (CSVRecord record : records) {
+                if (index == row) {
+                    Reading r = new Reading();
+
+                    r.setNo2(Double.valueOf(record.get("no2")));
+
+                    return r;
+                }
+                index++;
+            }
+        }
+
+        return null; // row does not exist
     }
 }

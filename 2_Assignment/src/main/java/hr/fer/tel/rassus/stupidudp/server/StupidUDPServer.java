@@ -4,10 +4,14 @@
  */
 package hr.fer.tel.rassus.stupidudp.server;
 
+import hr.fer.tel.rassus.stupidudp.kafka.KafkaSensor;
+import hr.fer.tel.rassus.stupidudp.model.Reading;
+import hr.fer.tel.rassus.stupidudp.model.Sensor;
 import hr.fer.tel.rassus.stupidudp.network.SimpleSimulatedDatagramSocket;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.Objects;
 
 /**
  *
@@ -15,22 +19,19 @@ import java.net.DatagramSocket;
  */
 public class StupidUDPServer {
 
-    static final int PORT = 10001; // server port
-
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) throws IOException {
+    public static void main(String[] args) throws IOException {
 
         byte[] rcvBuf = new byte[256]; // received bytes
         byte[] sendBuf;// sent bytes
-        String rcvStr;
 
         // create a UDP socket and bind it to the specified port on the local
         // host
-        DatagramSocket socket = new SimpleSimulatedDatagramSocket(PORT, 0.2, 200); //SOCKET -> BIND
+        DatagramSocket socket = new SimpleSimulatedDatagramSocket(KafkaSensor.PORT, 0.3, 1000); //SOCKET -> BIND
 
-        while (true) { //OBRADA ZAHTJEVA
+        while (KafkaSensor.stop == false) { //OBRADA ZAHTJEVA
             // create a DatagramPacket for receiving packets
             DatagramPacket packet = new DatagramPacket(rcvBuf, rcvBuf.length);
 
@@ -40,14 +41,37 @@ public class StupidUDPServer {
             // construct a new String by decoding the specified subarray of
             // bytes
             // using the platform's default charset
-            rcvStr = new String(packet.getData(), packet.getOffset(),
-                    packet.getLength());
-            System.out.println("Server received: " + rcvStr);
+            Reading reading = Reading.fromBytes(packet.getData());
+            System.out.println("Server received: " + reading);
+
+            boolean repeated = false;
+            for(Reading r : KafkaSensor.receivedReadings){
+                if(r.equals(reading)){
+                    repeated = true;
+                    break;
+                }
+            }
+
+            String message;
+            if(!repeated){
+                message = "New reading received: " + reading;
+
+                KafkaSensor.receivedReadings.add(reading);
+                KafkaSensor.sensor.increaseVector();
+
+                for(Sensor neighbour: KafkaSensor.sensor.getNeighbors()){
+                    if(Objects.equals(reading.getSensorId(), neighbour.getId())){
+                        neighbour.setVector(reading.getVectorTime());
+                    }
+                }
+            } else {
+                message = "Repeated reading received: " + reading;
+            }
 
             // encode a String into a sequence of bytes using the platform's
             // default charset
-            sendBuf = rcvStr.toUpperCase().getBytes();
-            System.out.println("Server sends: " + rcvStr.toUpperCase());
+            sendBuf = message.getBytes();
+            System.out.println("Server sends: " + message);
 
             // create a DatagramPacket for sending packets
             DatagramPacket sendPacket = new DatagramPacket(sendBuf,

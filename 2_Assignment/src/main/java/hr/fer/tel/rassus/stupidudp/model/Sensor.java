@@ -17,7 +17,21 @@ public class Sensor {
 
     private String address;
 
-    private Integer vector;
+    private Integer vector = 0;
 
     private List<Sensor> neighbors;
+
+    public Sensor(Long id, String address, Integer port) {
+        this.id = id;
+        this.address = address;
+        this.port = port;
+    }
+
+    public void increaseVector(){
+        this.vector++;
+    }
+
+    public void addNeighbor(Sensor sensor){
+        this.neighbors.add(sensor);
+    }
 }
