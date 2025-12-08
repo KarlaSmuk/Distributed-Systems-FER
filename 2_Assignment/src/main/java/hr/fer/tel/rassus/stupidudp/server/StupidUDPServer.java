@@ -19,10 +19,10 @@ import java.util.Objects;
  */
 public class StupidUDPServer {
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) throws IOException {
+    public static void run() throws IOException {
+        System.out.println();
+        System.out.println("Starting up UDP Server");
+        System.out.println();
 
         byte[] rcvBuf = new byte[256]; // received bytes
         byte[] sendBuf;// sent bytes
@@ -42,11 +42,16 @@ public class StupidUDPServer {
             // bytes
             // using the platform's default charset
             Reading reading = Reading.fromBytes(packet.getData());
-            System.out.println("Server received: " + reading);
+            System.out.println();
+            System.out.println("UDP Server received: " + reading);
 
             boolean repeated = false;
             for(Reading r : KafkaSensor.receivedReadings){
-                if(r.equals(reading)){
+                if (r.getSensorId().equals(reading.getSensorId()) &&
+                        r.getNo2().equals(reading.getNo2()) &&
+                        r.getVector().equals(reading.getVector()) &&
+                        r.getScalar().equals(reading.getScalar()))
+                {
                     repeated = true;
                     break;
                 }
@@ -59,9 +64,11 @@ public class StupidUDPServer {
                 KafkaSensor.receivedReadings.add(reading);
                 KafkaSensor.sensor.increaseVector();
 
+                System.out.println("Vector time increased: " + KafkaSensor.sensor);
+
                 for(Sensor neighbour: KafkaSensor.sensor.getNeighbors()){
                     if(Objects.equals(reading.getSensorId(), neighbour.getId())){
-                        neighbour.setVector(reading.getVectorTime());
+                        neighbour.setVector(reading.getVector());
                     }
                 }
             } else {
@@ -72,6 +79,7 @@ public class StupidUDPServer {
             // default charset
             sendBuf = message.getBytes();
             System.out.println("Server sends: " + message);
+            System.out.println();
 
             // create a DatagramPacket for sending packets
             DatagramPacket sendPacket = new DatagramPacket(sendBuf,

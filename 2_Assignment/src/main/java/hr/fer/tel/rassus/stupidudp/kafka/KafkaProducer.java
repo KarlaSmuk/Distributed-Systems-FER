@@ -8,6 +8,9 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.Properties;
 import java.util.Scanner;
 
+
+
+
 public class KafkaProducer { // Coordinator
 
     private static String TOPIC = "Command";
@@ -24,7 +27,7 @@ public class KafkaProducer { // Coordinator
         Scanner sc = new Scanner(System.in);
 
         while (true) {
-            System.out.println("Write a message (Start or Stop) to send to consumer on topic " + TOPIC );
+            System.out.println("Write a message (Start or Stop) to send to consumer on topic " + TOPIC);
             String command = sc.nextLine();
 
             ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC, null, command);

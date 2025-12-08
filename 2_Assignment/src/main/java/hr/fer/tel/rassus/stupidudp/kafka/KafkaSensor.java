@@ -1,8 +1,10 @@
 package hr.fer.tel.rassus.stupidudp.kafka;
 
+import hr.fer.tel.rassus.stupidudp.client.StupidUDPClient;
 import hr.fer.tel.rassus.stupidudp.model.Reading;
 import hr.fer.tel.rassus.stupidudp.model.Sensor;
 import hr.fer.tel.rassus.stupidudp.network.EmulatedSystemClock;
+import hr.fer.tel.rassus.stupidudp.server.StupidUDPServer;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -15,10 +17,8 @@ import org.json.JSONObject;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 // Producer -> sends register message on topic "Register"
 // Consumer -> receiving messages from topic "Command" and "Register"
@@ -38,11 +38,11 @@ public class KafkaSensor {
 
     public static Long sensorStartTime = 0L;
 
-    public static Sensor sensor;
+    public static Sensor sensor = new Sensor();
 
-    public static List<Reading> myReadings;
+    public static List<Reading> myReadings = new ArrayList<>();
 
-    public static List<Reading> receivedReadings;
+    public static List<Reading> receivedReadings = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
 
@@ -53,7 +53,7 @@ public class KafkaSensor {
         producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         Producer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(producerProperties);
 
-        sensor = new Sensor(ThreadLocalRandom.current().nextLong(Long.MAX_VALUE), "localhost", new ServerSocket(0).getLocalPort());
+        sensor = generateSensor();
         sensorStartTime = emulatedSystemClock.currentTimeMillis();
 
         ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC_REGISTER, null, new JSONObject(sensor).toString());
@@ -69,16 +69,13 @@ public class KafkaSensor {
         consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, UUID.randomUUID().toString());
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        Consumer<String, String> consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(consumerProperties);
+        Consumer<String, String> consumerCommand = new org.apache.kafka.clients.consumer.KafkaConsumer<>(consumerProperties);
 
-        consumer.subscribe(Collections.singleton(TOPIC_COMMAND));
-
-        System.out.println("Waiting for messaged to arrive on topic " + TOPIC_COMMAND);
+        consumerCommand.subscribe(Collections.singleton(TOPIC_COMMAND));
 
         Consumer<String, String> consumerRegister = new org.apache.kafka.clients.consumer.KafkaConsumer<>(consumerProperties);
         consumerRegister.subscribe(Collections.singleton(TOPIC_REGISTER));
 
-        System.out.println("Waiting for messaged to arrive on topic " + TOPIC_REGISTER);
 
         // needs 2 threads
         // one to loop until start
@@ -86,32 +83,68 @@ public class KafkaSensor {
 
         Thread untilStart = new Thread(() -> {
             while (!start) {
-                ConsumerRecords<String, String> consumerRecords = consumer.poll(Duration.ofMillis(1000));
+                System.out.println("Waiting for START command");
+                ConsumerRecords<String, String> consumerRecords = consumerRegister.poll(Duration.ofMillis(1000));
 
                 consumerRecords.forEach(r -> {
-                    System.out.printf("Consumer Record:(%d, %s, %d, %d)\n", r.key(), r.value(), r.partition(), r.offset());
                     Sensor neighbour =  new ObjectMapper().readValue(r.value(), Sensor.class);
                     if (!Objects.equals(neighbour.getId(), sensor.getId()))
                     {
+                        System.out.println();
+                        System.out.println("Received neighbour " + neighbour);
                         sensor.addNeighbor(neighbour);
-                        System.out.println("New neighbour: " + neighbour);
                         System.out.println("Current neighbours: " + sensor.getNeighbors());
+                        System.out.println();
                     }
                 });
 
-                consumer.commitAsync();
+                consumerRegister.commitAsync();
             }
 
+            // after start is sent -> start == true
+            Thread runStupidUDPClient = new Thread(() -> {
+                try {
+                    StupidUDPClient.run();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+            });
+
+            Thread runStupidUDPServer = new Thread(() -> {
+                try {
+                    StupidUDPServer.run();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+            });
+
+            Thread sortEvery5Seconds = new Thread(() -> {
+                while (!stop && start) {
+
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        return; // exit thread
+                    }
+
+                    processLast5Seconds();
+                }
+            });
+
+
+            sortEvery5Seconds.start();
+            runStupidUDPClient.start();
+            runStupidUDPServer.start();
         });
 
         Thread untilStop = new Thread(() -> {
             while (!stop) {
-                ConsumerRecords<String, String> consumerRecords = consumer.poll(Duration.ofMillis(1000));
+                ConsumerRecords<String, String> consumerRecords = consumerCommand.poll(Duration.ofMillis(1000));
 
                 consumerRecords.forEach(r -> {
-                    System.out.printf("Consumer Record:(%d, %s, %d, %d)\n", r.key(), r.value(), r.partition(), r.offset());
-                    String message = "Received: " + r.value();
-                    System.out.println(message);
+                    System.out.println();
+                    System.out.println("Received: " + r.value());
+                    System.out.println();
 
                     if(r.value().equals("Stop"))
                         stop = true;
@@ -119,12 +152,68 @@ public class KafkaSensor {
                         start = true;
                 });
 
-                consumer.commitAsync();
+                consumerCommand.commitAsync();
             }
             System.exit(0);
         });
 
         untilStart.start();
         untilStop.start();
+    }
+
+    private static void processLast5Seconds() {
+        System.out.println();
+        System.out.println("Run SORT every 5 seconds");
+
+        // Filtriraj očitanja u zadnjih 5 sekundi
+        List<Reading> readings = new ArrayList<>();
+        readings.addAll(myReadings);
+        readings.addAll(receivedReadings);
+
+        if (readings.isEmpty()) {
+            System.out.println("Readings are empty");
+            return;
+        }
+
+        readings.removeIf(r -> System.currentTimeMillis() - r.getScalar() > 5000);
+
+        // sort by scalar
+        List<Reading> scalarSorted = new ArrayList<>(readings);
+        scalarSorted.sort(Comparator.comparingLong(Reading::getScalar));
+
+        System.out.println("Sorted by scalar time");
+        scalarSorted.forEach(System.out::println);
+
+        // sort by vector
+        List<Reading> vectorSorted = new ArrayList<>(readings);
+        vectorSorted.sort((a, b) -> compareVector(a.getVector(), b.getVector()));
+
+        System.out.println("Sorted by vector time");
+        vectorSorted.forEach(System.out::println);
+
+        // average value
+        double avg = readings.stream()
+                .mapToDouble(Reading::getNo2)
+                .average()
+                .orElse(0);
+
+        System.out.println("Average value of readings NO2: " + avg);
+        System.out.println();
+    }
+
+    private static int compareVector(Integer t1, Integer t2) {
+        return t1.compareTo(t2);
+    }
+
+    private static Sensor generateSensor()
+    {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Sensor id:");
+        Long id = Long.valueOf(scanner.nextLine());
+
+        scanner.close();
+
+        PORT = 3000 + Integer.parseInt(id.toString());
+        return new Sensor(id, "localhost", PORT);
     }
 }

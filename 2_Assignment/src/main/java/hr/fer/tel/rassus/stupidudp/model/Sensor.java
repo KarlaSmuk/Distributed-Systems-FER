@@ -2,6 +2,7 @@ package hr.fer.tel.rassus.stupidudp.model;
 
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -19,7 +20,7 @@ public class Sensor {
 
     private Integer vector = 0;
 
-    private List<Sensor> neighbors;
+    private List<Sensor> neighbors = new ArrayList<>();
 
     public Sensor(Long id, String address, Integer port) {
         this.id = id;

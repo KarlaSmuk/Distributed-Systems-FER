@@ -1,7 +1,11 @@
 package hr.fer.tel.rassus.stupidudp.model;
 
 import lombok.*;
+import org.json.JSONObject;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+
+import java.nio.charset.StandardCharsets;
 
 @Data
 @NoArgsConstructor
@@ -14,18 +18,27 @@ public class Reading {
 
     private Double no2;
 
-    private Long scalarTime;
+    private Long scalar;
 
-    private Integer vectorTime;
-
+    private Integer vector;
 
     public byte[] toBytes() {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsBytes(this);
+        JSONObject obj = new JSONObject();
+        obj.put("sensorId", sensorId);
+        obj.put("no2", no2);
+        obj.put("scalar", scalar);
+        obj.put("vector", vector);
+        return (obj.toString()).getBytes(StandardCharsets.UTF_8);
     }
 
     public static Reading fromBytes(byte[] bytes) {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(bytes, Reading.class);
+        String jsonString = new String(bytes, StandardCharsets.UTF_8).trim();
+        JSONObject obj = new JSONObject(jsonString.trim()); // trim whitespace/control chars
+        Reading reading = new Reading();
+        reading.sensorId = obj.getLong("sensorId");
+        reading.no2 = obj.getDouble("no2");
+        reading.scalar = obj.getLong("scalar");
+        reading.vector = Math.toIntExact(obj.getLong("vector"));
+        return reading;
     }
 }
