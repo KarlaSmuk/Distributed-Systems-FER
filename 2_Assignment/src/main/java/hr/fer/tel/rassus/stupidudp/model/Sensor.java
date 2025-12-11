@@ -18,7 +18,7 @@ public class Sensor {
 
     private String address;
 
-    private Integer vector = 0;
+    private Integer vector = 0; // its always max bc it increases immediately after receiving reading or before sending new one
 
     private List<Sensor> neighbors = new ArrayList<>();
 

@@ -64,7 +64,7 @@ public class StupidUDPServer {
                 KafkaSensor.receivedReadings.add(reading);
                 KafkaSensor.sensor.increaseVector();
 
-                System.out.println("Vector time increased: " + KafkaSensor.sensor);
+                System.out.println("New reading received, increasing vector for sensor");
 
                 for(Sensor neighbour: KafkaSensor.sensor.getNeighbors()){
                     if(Objects.equals(reading.getSensorId(), neighbour.getId())){
@@ -78,7 +78,7 @@ public class StupidUDPServer {
             // encode a String into a sequence of bytes using the platform's
             // default charset
             sendBuf = message.getBytes();
-            System.out.println("Server sends: " + message);
+            System.out.println("Server sends ACK message: " + message);
             System.out.println();
 
             // create a DatagramPacket for sending packets

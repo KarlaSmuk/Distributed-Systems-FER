@@ -2,8 +2,6 @@ package hr.fer.tel.rassus.stupidudp.model;
 
 import lombok.*;
 import org.json.JSONObject;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
 
@@ -33,7 +31,7 @@ public class Reading {
 
     public static Reading fromBytes(byte[] bytes) {
         String jsonString = new String(bytes, StandardCharsets.UTF_8).trim();
-        JSONObject obj = new JSONObject(jsonString.trim()); // trim whitespace/control chars
+        JSONObject obj = new JSONObject(jsonString.trim());
         Reading reading = new Reading();
         reading.sensorId = obj.getLong("sensorId");
         reading.no2 = obj.getDouble("no2");

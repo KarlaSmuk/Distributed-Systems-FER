@@ -44,7 +44,9 @@ public class KafkaSensor {
 
     public static List<Reading> receivedReadings = new ArrayList<>();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
+
+        System.out.println("Starting Kafka Sensor with id: " + args[0]);
 
         // 1. PRODUCER
         Properties producerProperties = new Properties();
@@ -53,7 +55,7 @@ public class KafkaSensor {
         producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         Producer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(producerProperties);
 
-        sensor = generateSensor();
+        sensor = generateSensor(Long.parseLong(args[0]));
         sensorStartTime = emulatedSystemClock.currentTimeMillis();
 
         ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC_REGISTER, null, new JSONObject(sensor).toString());
@@ -205,14 +207,8 @@ public class KafkaSensor {
         return t1.compareTo(t2);
     }
 
-    private static Sensor generateSensor()
+    private static Sensor generateSensor(Long id)
     {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Sensor id:");
-        Long id = Long.valueOf(scanner.nextLine());
-
-        scanner.close();
-
         PORT = 3000 + Integer.parseInt(id.toString());
         return new Sensor(id, "localhost", PORT);
     }

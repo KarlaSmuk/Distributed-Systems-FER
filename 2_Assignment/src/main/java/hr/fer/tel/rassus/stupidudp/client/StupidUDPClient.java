@@ -44,7 +44,7 @@ public class StupidUDPClient {
             Thread.sleep(3000); // 3 seconds
 
             Long currentTime = KafkaSensor.emulatedSystemClock.currentTimeMillis();
-            Reading reading = ReadingFinder.findReading((currentTime - KafkaSensor.sensorStartTime) / 1000);
+            Reading reading = ReadingFinder.findReading((currentTime - KafkaSensor.sensorStartTime) / 1000); // 1000 bc of ms to s
 
             KafkaSensor.sensor.increaseVector();
 
@@ -55,6 +55,7 @@ public class StupidUDPClient {
             KafkaSensor.myReadings.add(reading);
 
             System.out.println();
+            System.out.println("Find reading, increasing vector for sensor");
             System.out.println("UDP Client sends: " + reading);
             System.out.println();
             byte[] sendBuf = reading.toBytes();
@@ -75,10 +76,10 @@ public class StupidUDPClient {
                         socket.send(packet);
 
 
-                        // receive a datagram packet from this socket
+                        // receive a datagram packet from this socket (ACK)
                         socket.receive(rcvPacket); //RECVFROM
                         String receiveString = new String(rcvPacket.getData(), rcvPacket.getOffset(), rcvPacket.getLength());
-                        System.out.println("Received: " + receiveString);
+                        System.out.println("Received ACK message: " + receiveString);
                         break; // if packet is received exit loop
                     } catch (SocketTimeoutException e) {
                        System.out.println("Lost packet, sending again");
