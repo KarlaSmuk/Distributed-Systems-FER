@@ -9,6 +9,7 @@ import hr.fer.tel.rassus.stupidudp.model.Reading;
 import hr.fer.tel.rassus.stupidudp.model.Sensor;
 import hr.fer.tel.rassus.stupidudp.network.*;
 
+import java.awt.event.KeyAdapter;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -47,6 +48,7 @@ public class StupidUDPClient {
             Reading reading = ReadingFinder.findReading((currentTime - KafkaSensor.sensorStartTime) / 1000); // 1000 bc of ms to s
 
             KafkaSensor.sensor.increaseVector();
+            KafkaSensor.sensor.setScalar(currentTime); // DO I NEED THIS
 
             reading.setSensorId(KafkaSensor.sensor.getId());
             reading.setScalar(currentTime);
@@ -64,12 +66,12 @@ public class StupidUDPClient {
             // create a datagram packet for receiving data
             DatagramPacket rcvPacket = new DatagramPacket(rcvBuf, rcvBuf.length);
 
-            for(Sensor neighbor : KafkaSensor.sensor.getNeighbors()) {
+            for (Sensor neighbor : KafkaSensor.sensor.getNeighbors()) {
 
                 // create a datagram packet for sending data
                 DatagramPacket packet = new DatagramPacket(sendBuf, sendBuf.length, address, neighbor.getPort());
 
-                while(true) { // loop for sending again if packet is lost
+                while (true) { // loop for sending again if packet is lost
 
                     try {
                         // send a datagram packet from this socket
@@ -82,7 +84,7 @@ public class StupidUDPClient {
                         System.out.println("Received ACK message: " + receiveString);
                         break; // if packet is received exit loop
                     } catch (SocketTimeoutException e) {
-                       System.out.println("Lost packet, sending again");
+                        System.out.println("Lost packet, sending again");
                     } catch (IOException ex) {
                         Logger.getLogger(StupidUDPClient.class.getName()).log(Level.ALL, "Exception", ex);
                     }

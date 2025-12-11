@@ -8,6 +8,8 @@ import hr.fer.tel.rassus.stupidudp.server.StupidUDPServer;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -32,7 +34,7 @@ public class KafkaSensor {
 
     public static Boolean stop = false;
 
-    public static final EmulatedSystemClock emulatedSystemClock = new EmulatedSystemClock();
+    public static EmulatedSystemClock emulatedSystemClock = null;
 
     public static int PORT;
 
@@ -53,10 +55,11 @@ public class KafkaSensor {
         producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        Producer<String, String> producer = new org.apache.kafka.clients.producer.KafkaProducer<>(producerProperties);
+        Producer<String, String> producer = new KafkaProducer<>(producerProperties);
 
-        sensor = generateSensor(Long.parseLong(args[0]));
+        emulatedSystemClock = new EmulatedSystemClock();
         sensorStartTime = emulatedSystemClock.currentTimeMillis();
+        sensor = generateSensor(Long.parseLong(args[0]), sensorStartTime);
 
         ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC_REGISTER, null, new JSONObject(sensor).toString());
 
@@ -71,11 +74,11 @@ public class KafkaSensor {
         consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, UUID.randomUUID().toString());
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        Consumer<String, String> consumerCommand = new org.apache.kafka.clients.consumer.KafkaConsumer<>(consumerProperties);
+        Consumer<String, String> consumerCommand = new KafkaConsumer<>(consumerProperties);
 
         consumerCommand.subscribe(Collections.singleton(TOPIC_COMMAND));
 
-        Consumer<String, String> consumerRegister = new org.apache.kafka.clients.consumer.KafkaConsumer<>(consumerProperties);
+        Consumer<String, String> consumerRegister = new KafkaConsumer<>(consumerProperties);
         consumerRegister.subscribe(Collections.singleton(TOPIC_REGISTER));
 
 
@@ -89,9 +92,8 @@ public class KafkaSensor {
                 ConsumerRecords<String, String> consumerRecords = consumerRegister.poll(Duration.ofMillis(1000));
 
                 consumerRecords.forEach(r -> {
-                    Sensor neighbour =  new ObjectMapper().readValue(r.value(), Sensor.class);
-                    if (!Objects.equals(neighbour.getId(), sensor.getId()))
-                    {
+                    Sensor neighbour = new ObjectMapper().readValue(r.value(), Sensor.class);
+                    if (!Objects.equals(neighbour.getId(), sensor.getId())) {
                         System.out.println();
                         System.out.println("Received neighbour " + neighbour);
                         sensor.addNeighbor(neighbour);
@@ -148,9 +150,9 @@ public class KafkaSensor {
                     System.out.println("Received: " + r.value());
                     System.out.println();
 
-                    if(r.value().equals("Stop"))
+                    if (r.value().equals("Stop"))
                         stop = true;
-                    else if(r.value().equals("Start"))
+                    else if (r.value().equals("Start"))
                         start = true;
                 });
 
@@ -207,9 +209,8 @@ public class KafkaSensor {
         return t1.compareTo(t2);
     }
 
-    private static Sensor generateSensor(Long id)
-    {
+    private static Sensor generateSensor(Long id, Long scalar) {
         PORT = 3000 + Integer.parseInt(id.toString());
-        return new Sensor(id, "localhost", PORT);
+        return new Sensor(id, "localhost", PORT, scalar);
     }
 }

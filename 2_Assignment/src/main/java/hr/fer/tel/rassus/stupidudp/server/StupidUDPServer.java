@@ -8,6 +8,7 @@ import hr.fer.tel.rassus.stupidudp.kafka.KafkaSensor;
 import hr.fer.tel.rassus.stupidudp.model.Reading;
 import hr.fer.tel.rassus.stupidudp.model.Sensor;
 import hr.fer.tel.rassus.stupidudp.network.SimpleSimulatedDatagramSocket;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -46,28 +47,31 @@ public class StupidUDPServer {
             System.out.println("UDP Server received: " + reading);
 
             boolean repeated = false;
-            for(Reading r : KafkaSensor.receivedReadings){
+            for (Reading r : KafkaSensor.receivedReadings) {
                 if (r.getSensorId().equals(reading.getSensorId()) &&
                         r.getNo2().equals(reading.getNo2()) &&
                         r.getVector().equals(reading.getVector()) &&
-                        r.getScalar().equals(reading.getScalar()))
-                {
+                        r.getScalar().equals(reading.getScalar())) {
                     repeated = true;
                     break;
                 }
             }
 
             String message;
-            if(!repeated){
+            if (!repeated) {
                 message = "New reading received: " + reading;
 
                 KafkaSensor.receivedReadings.add(reading);
                 KafkaSensor.sensor.increaseVector();
+                if (reading.getScalar() > KafkaSensor.emulatedSystemClock.currentTimeMillis()) {
+                    KafkaSensor.sensor.setScalar(reading.getScalar());
+                }
 
                 System.out.println("New reading received, increasing vector for sensor");
 
-                for(Sensor neighbour: KafkaSensor.sensor.getNeighbors()){
-                    if(Objects.equals(reading.getSensorId(), neighbour.getId())){
+                for (Sensor neighbour : KafkaSensor.sensor.getNeighbors()) {
+                    if (Objects.equals(reading.getSensorId(), neighbour.getId())) {
+                        // to update neighbour set vector bc new received vector is always max
                         neighbour.setVector(reading.getVector());
                     }
                 }

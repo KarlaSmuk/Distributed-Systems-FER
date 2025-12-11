@@ -9,14 +9,12 @@ import java.util.Properties;
 import java.util.Scanner;
 
 
-
-
 public class KafkaProducer { // Coordinator
 
     private static String TOPIC = "Command";
     private static String STOP = "Stop";
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         Properties producerProperties = new Properties();
         producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -35,7 +33,7 @@ public class KafkaProducer { // Coordinator
             producer.send(record);
             producer.flush();
 
-            if(STOP.equals(command)){ // because after sending stop Producer also needs to be terminated
+            if (STOP.equals(command)) { // because after sending stop Producer also needs to be terminated
                 sc.close();
                 System.out.println("Sent Stop command. Coordinator shutting down...");
                 System.exit(0);
