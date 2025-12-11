@@ -40,7 +40,7 @@ public class KafkaSensor {
 
     public static Long sensorStartTime = 0L;
 
-    public static Sensor sensor = new Sensor();
+    public static Sensor sensor = null;
 
     public static List<Reading> myReadings = new ArrayList<>();
 
