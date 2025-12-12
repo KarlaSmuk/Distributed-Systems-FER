@@ -73,6 +73,7 @@ public class StupidUDPServer {
                 }
 
                 System.out.println("New reading received, increasing vector for sensor");
+                System.out.println(KafkaSensor.sensor);
 
                 for (Sensor neighbour : KafkaSensor.sensor.getNeighbors()) {
                     if (Objects.equals(reading.getSensorId(), neighbour.getId())) {

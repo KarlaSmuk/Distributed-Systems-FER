@@ -58,6 +58,7 @@ public class StupidUDPClient {
 
             System.out.println();
             System.out.println("Find reading, increasing vector for sensor");
+            System.out.println(KafkaSensor.sensor);
             System.out.println("UDP Client sends: " + reading);
             System.out.println();
             byte[] sendBuf = reading.toBytes();
