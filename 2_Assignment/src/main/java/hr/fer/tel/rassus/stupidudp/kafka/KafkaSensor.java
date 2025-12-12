@@ -18,7 +18,6 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.json.JSONObject;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
@@ -178,8 +177,6 @@ public class KafkaSensor {
             System.out.println("Readings are empty");
             return;
         }
-
-        readings.removeIf(r -> System.currentTimeMillis() - r.getScalar() > 5000);
 
         // sort by scalar
         List<Reading> scalarSorted = new ArrayList<>(readings);
