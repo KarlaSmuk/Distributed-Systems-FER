@@ -168,7 +168,6 @@ public class KafkaSensor {
         System.out.println();
         System.out.println("Run SORT every 5 seconds");
 
-        // Filtriraj očitanja u zadnjih 5 sekundi
         List<Reading> readings = new ArrayList<>();
         readings.addAll(myReadings);
         readings.addAll(receivedReadings);
