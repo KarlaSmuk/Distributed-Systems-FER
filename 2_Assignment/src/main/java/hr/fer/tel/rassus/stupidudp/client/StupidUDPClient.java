@@ -48,7 +48,7 @@ public class StupidUDPClient {
             Reading reading = ReadingFinder.findReading((currentTime - KafkaSensor.sensorStartTime) / 1000); // 1000 bc of ms to s
 
             KafkaSensor.sensor.increaseVector();
-            KafkaSensor.sensor.setScalar(currentTime); // DO I NEED THIS
+            KafkaSensor.sensor.setScalar(currentTime); // set new scalar time when sending a reading
 
             reading.setSensorId(KafkaSensor.sensor.getId());
             reading.setScalar(currentTime);

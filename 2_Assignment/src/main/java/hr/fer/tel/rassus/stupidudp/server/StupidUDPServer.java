@@ -63,8 +63,13 @@ public class StupidUDPServer {
 
                 KafkaSensor.receivedReadings.add(reading);
                 KafkaSensor.sensor.increaseVector();
+                // when new reading is received update scalar
+                // if scalar for reading is greater than currentTime on sensor, set one from reading
                 if (reading.getScalar() > KafkaSensor.emulatedSystemClock.currentTimeMillis()) {
                     KafkaSensor.sensor.setScalar(reading.getScalar());
+                // if not set current sensor time
+                } else {
+                    KafkaSensor.sensor.setScalar(KafkaSensor.emulatedSystemClock.currentTimeMillis());
                 }
 
                 System.out.println("New reading received, increasing vector for sensor");
